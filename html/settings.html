@@ -1,0 +1,31 @@
+
+    <form id="settings_form">
+      <div class="form-actions pull-left">
+        <!--<label class="checkbox" for="checkbox">-->
+          <!--<input type="checkbox" value="true" id="checkbox" name="checkbox"> Use Album Artist when available</label>-->
+        <div class="container">
+          <label class="pull-left" style="display:inline;line-height:30px;float:left;text-align:right;width:150px;">Path to music library:&nbsp;</label>
+          <div class="input-append">
+            <input type="text" id="music_location" class="input-xxlarge">
+            <button class="btn btn-primary" type="button" onclick="startScan();">Scan Now
+              <br> 
+            </button>
+          </div>
+        </div>
+        <div class="container">
+          <label class="pull-left" style="display:inline;line-height:30px;float:left;text-align:right;width:150px">File naming scheme:&nbsp;</label>
+          <div class="input-append">
+            <input type="text" id="music_format" class="input-xxlarge">
+              <br>
+	      <h5>Possible options are: %artist%, %album%, %year%, %genre%, %title%, %track_no%, %track_total%, %disc_no%, %disc_total%</h5>
+	      <br>
+            </button>
+          </div>
+        </div>
+        <label>
+          <br> 
+        </label>
+        <button class="btn btn-primary">Save</button>
+        <input type="reset" class="btn" value="Reset"> 
+      </div>
+    </form>

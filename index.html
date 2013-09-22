@@ -1,0 +1,765 @@
+<!doctype html>
+<html> 
+  <head>
+    <meta http-equiv=”Pragma” content=”no-cache”>
+    <meta http-equiv=”Expires” content=”-1″>
+    <meta http-equiv=”CACHE-CONTROL” content=”NO-CACHE”>
+    <title>.:m.a.m.a:.</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+    <link rel="stylesheet" href="themes/cosmo/bootstrap.css">
+    <!--<link rel="stylesheet" href="css/bootstrap-responsive.css">
+    <link rel="stylesheet" href="https://djyhxgczejc94.cloudfront.net/builds/f0fdb9a374508dcab0ab5a5b4124834f6ff0e52c.css">-->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/sparkle.js"></script>
+    <script type="text/javascript">
+    	var artists = [];
+	var albums = [];
+	var tracks =[];
+
+	var settings = [];
+
+	var active_artists = [];
+	var active_albums = [];
+	var active_tracks = [];
+
+	var active_button;
+	var active_sort = "#sort_alphabetical";
+
+	var showLetters = true;
+
+	$(document).ready(initialize);
+
+	function initialize(){
+		getArtists();
+		showEdit();
+		$("#all_button").css("font-weight","bold");
+		$(window).resize(onResize);
+		onResize();
+
+		$.getScript("js/scan.js");
+	}
+
+	function onResize(){
+		var new_height = $(window).height() - 50 - 40;
+		$("#scroll").css("height",new_height - $("#letter_list").height());
+		$("#album_list").css("height",new_height);
+		$("#track_list").css("height",new_height);
+		$("#action").css("height",new_height + 40);
+	}
+
+
+	function activateButton(new_active){
+		$(active_button).removeClass("active");
+		active_button = new_active;
+		$(active_button).addClass("active");
+	}
+
+	function showMain(){
+		$("#main").load("html/main.html", initialize);
+		$("#all_button").css("font-weight","bold");
+		$("#settings_button").css("font-weight","normal");
+	}
+
+	function showSettings(){
+		$("#main").load("html/settings.html", getSettings);
+		$("#all_button").css("font-weight","normal");
+		$("#settings_button").css("font-weight","bold");
+	}
+
+	function showMerge(){
+		activateButton("#merge_button");
+		$("#action_contents").load("html/merge.html");
+		//populateMerge();
+	}
+
+	function showEdit(){
+		activateButton("#edit_button");
+		$("#action_contents").load("html/edit.html",populateEdit);
+
+	}
+
+	function activateSaveButton(){	
+		$("#editForm").submit(function(event){
+			event.preventDefault();
+			editItem();
+			//submitEdit();
+		});
+	}
+
+	function activateSettingsSaveButton(){
+		$("#settings_form").submit(function(event){
+			event.preventDefault();
+			saveSettings();
+		});
+	}
+
+	function showDelete(){
+		activateButton("#delete_button");
+		$("#action_contents").load("html/delete.html", populateDelete);
+	}
+
+	function populateActive(){
+		if (active_button == "#delete_button"){
+			populateDelete();
+		}
+	}
+
+	function setActiveSort(new_active_sort){
+		$(active_sort).removeClass("active");
+		$(new_active_sort).addClass("active");
+		active_sort = new_active_sort;
+	}
+
+	function populateEdit(){
+		
+		if (active_tracks.length > 0){
+			$("#artist_field").val(active_artists[0].name);
+			$("#album_field").val(active_albums[0].name);
+			$("#track_field").val(active_tracks[0].name);
+			$("#year_field").val(active_albums[0].year);
+			$("#track_no_field").val(active_tracks[0].track_no);
+			$("#track_total_field").val(active_tracks[0].track_total);
+			$("#disc_no_field").val(active_tracks[0].disc_no);
+			$("#disc_total_field").val(active_tracks[0].disc_total);
+			$("#genre_field").val(active_tracks[0].genre);
+		}
+		else if (active_albums.length > 0){
+			$("#artist_field").val(active_artists[0].name);
+			getAlbumEditFields(active_albums[0].album_id);
+		}
+		else if (active_artists.length > 0){
+			$("#artist_field").val(fixSpecials(active_artists[0].name));
+			$("#album_edit").hide();
+			$("#track_edit").hide();
+			$("#year_edit").hide();
+			$("#track_no_edit").hide();
+			$("#disc_no_edit").hide();
+			$("#genre_edit").hide();
+			$("#album_artist_edit").hide();
+			$("#comment_edit").hide();
+		}
+
+		activateSaveButton();
+	}	
+
+	function submitEdit(){
+		startSparkling("Saving changes");
+		$.ajax({
+			type: "GET"
+			,url: "api/edit.php"
+			,data: $('#editForm').serialize()
+			,success: function (){
+				stopSparkling("Saving changes");
+				initialize();
+				}
+			,error: handleError
+		});
+	}
+
+	function getArtists(data){
+		$("#album").hide();
+		$("#track").hide();
+		$("#action").hide();
+
+		if (active_sort == "#sort_today"){
+			data = {interval:"1 day"};
+			showLetters = false;
+		}
+		else if (active_sort == "#sort_week"){
+			data = {interval:"1 week"};
+			showLetters = false;
+		}
+		else if (active_sort == "#sort_month"){
+			data = {interval:"1 month"};
+			showLetters = false;
+		}
+		else {
+			showLetters = true;
+		}
+
+		$.ajax({
+			url:"api/getArtists.php"
+			,data:data
+			,type:'GET'
+			,datatype:'json'
+			,success:setArtists
+			,error:handleError
+		});
+	}
+
+	function getArtistsByInterval(interval){
+		var data = {interval:interval};
+		showLetters = false;
+		getArtists(data);
+	}
+
+	function getAlbumEditFields(album_id){
+		$.ajax({
+			url:"api/getAlbumFields.php"
+			,data:{album_id:album_id}
+			,type:'GET'
+			,datatype:'json'
+			,success:populateAlbumEditForm
+			,error:handleError
+		});
+	}
+
+	function setArtists(data,obj,sts){
+		artists = $.parseJSON(data);
+		showArtists();
+	}
+
+	function setAlbums(data,obj,sts){
+		albums = $.parseJSON(data);
+		showAlbums();
+	}
+
+	function setTracks(data,obj,sts){
+		tracks = $.parseJSON(data);
+		showTracks();
+	}
+
+	function showTracks(){
+		var content = [];
+		$.each(tracks, function(idx,obj){
+			content.push('<li id="track_' + obj.track_id + '"> <a onclick="selectTrack(' + obj.track_id + ', ' + idx + ');return false;">' + obj.track_no + " - " + obj.name + '</a> </li>');
+		});
+		$("#track_list").html(content.join('\n'));
+		$("#track").show();
+	}
+
+	function showAlbums(){
+		var content = [];
+		$.each(albums, function(idx,obj){
+			content.push('<li id="album_' + obj.album_id + '"> <a onclick="selectAlbum(' + obj.album_id + ', ' + idx + ');return false;">' + obj.name + '</a> </li>');
+			/*if (obj.year != null){
+				content.push('<li> <a id="album_' + obj.album_id + '" href="#" onclick="alert(' + obj.album_id + ');return false;">' + obj.year + " - " + obj.name + " (" + obj.year + ")" + '</a> </li>');
+			}
+			else {
+				content.push('<li> <a id="album_' + obj.album_id + '" href="#" onclick="alert(' + obj.album_id + ');return false;">' + obj.name + '</a> </li>');
+			}*/
+		});
+		$("#album_list").html(content.join('\n'));
+		$("#album").show();
+	}
+
+	function showArtists(){
+		var content = [];
+		var letterShortcuts = [];
+
+		var firstLetter = "";
+		var ahappened = false;
+		var symbolhappened = false;
+
+		$.each(artists, function(idx,obj){
+			if (showLetters && obj.sort_name.charAt(0).toUpperCase() != firstLetter && (isLetter(obj.sort_name.charAt(0).toUpperCase()) || !symbolhappened)){
+				firstLetter = obj.sort_name.charAt(0).toUpperCase();
+	
+				if (!isLetter(firstLetter)){
+					firstLetter = "#";
+					symbolhappened = true;
+					letterShortcuts.push('<a href="" onclick="scrollToLetter(\'SYM\');return false;">' + firstLetter + '</a>');
+					content.push('<h4 id="letter_SYM">' + firstLetter + '</h3>');
+				}
+				else {
+					letterShortcuts.push('<a href="" onclick="scrollToLetter(\'' + firstLetter + '\');return false;">' + firstLetter + '</a>');
+					content.push('<h4 id="letter_' + firstLetter + '">' + firstLetter + '</h3>');
+				}
+				
+			}
+			//content.push('<li id="artist_' + obj.id + '"> <a onclick="selectArtist(' + obj.id + ', ' + idx + ');return false;"> <input onclick="checkArtist(' + obj.id + ', ' + idx + ')" id="artist_check_' + obj.id + '" type="checkbox" style="margin-right:5px; margin-top:0px"/>' + obj.name + '</a> </li>'); //CHECKBOX IN FRONT
+			content.push('<li id="artist_' + obj.id + '"> <a onclick="selectArtist(' + obj.id + ', ' + idx + ');return false;">'  + obj.name + '</a> </li>'); //NO CHECKBOX
+			//content.push('<li id="artist_' + obj.id + '"> <a onclick="selectArtist(' + obj.id + ', ' + idx + ');return false;">'  + obj.name + '<input id="artist_check_' + obj.id + '" type="checkbox" style="margin-top:0px; float:right;"/></a> </li>'); //CHECKBOX IN BACK
+			//<input id="artist_check_' + obj.id + '" type="checkbox" style="margin-right:5px; margin-top:0px"/>'
+		});
+		$("#artist_list").html(content.join('\n'));
+		$("#letter_list").html(letterShortcuts.join('\n'));
+		onResize();
+	}
+
+	function isLetter(str){
+		var code = str.charCodeAt(0);
+		return (code >= 65 && code <= 90);
+	}
+
+	function scrollToLetter(letter){
+		/*$('#scroll').animate({
+		         scrollTop: $("#letter_" + letter).offset().top
+			 }, 500);*/
+
+		//Stolen from http://lions-mark.com/jquery/scrollTo/
+		$.fn.scrollTo = function( target, options, callback ){
+			if(typeof options == 'function' && arguments.length == 2){ callback = options; options = target; }
+			var settings = $.extend({
+				scrollTarget  : target,
+				offsetTop     : 90,
+				duration      : 500,
+				easing        : 'swing'
+			}, options);
+			return this.each(function(){
+				var scrollPane = $(this);
+				var scrollTarget = (typeof settings.scrollTarget == "number") ? settings.scrollTarget : $(settings.scrollTarget);
+				var scrollY = (typeof scrollTarget == "number") ? scrollTarget : scrollTarget.offset().top + scrollPane.scrollTop() - parseInt(settings.offsetTop);
+				scrollPane.animate({scrollTop : scrollY }, parseInt(settings.duration), settings.easing, function(){
+					if (typeof callback == 'function') { callback.call(this); }
+				});
+			});
+		}
+
+		$("#scroll").scrollTo("#letter_" + letter);
+	}
+
+	function checkArtist(artist_id, artist_idx){
+		
+		alert("hello!");
+	}
+
+	function selectArtist(artist_id, artist_idx){
+		$.each(active_artists, function(idx,obj){
+			$("#artist_" + obj.id).removeClass("active");
+			$("#artist_check_" + obj.id).prop('checked', false);
+		});
+
+		active_artists = [];
+		active_albums = [];
+		active_tracks = [];
+
+		$("#artist_" + artist_id).addClass("active");
+		$("#artist_check_" + artist_id).prop('checked', true);
+		active_artists.push(artists[artist_idx]);
+
+		$("#album").hide();
+		$("#track").hide();
+		$("#action").show();
+		
+		populateArtistEditForm(artists[artist_idx].name);
+
+		$.ajax({
+			url:"api/getAlbums.php"
+			,data:{artist_id:artist_id}
+			,type:'GET'
+			,datatype:'json'
+			,success:setAlbums
+			,error:handleError
+		});
+		populateActive();
+	}
+
+	function selectAlbum(album_id, album_idx){
+		$.each(active_albums, function(idx, obj){
+			$("#album_" + obj.album_id).toggleClass("active");
+		});
+		
+		active_albums = [];
+		active_tracks = [];
+
+		$("#album_" + album_id).addClass("active");
+		active_albums.push(albums[album_idx]);
+
+		$("#track").hide();
+
+		getAlbumEditFields(album_id);
+
+		$.ajax({
+			url:"api/getTracks.php"
+			,data:{album_id:album_id}
+			,type:'GET'
+			,datatype:'json'
+			,success:setTracks
+			,error:handleError
+		});
+		populateActive();
+	}
+
+	function selectTrack(track_id, track_idx){
+		$.each(active_tracks, function(idx, obj){
+			$("#track_" + obj.track_id).toggleClass("active");
+		});
+
+		active_tracks = [];
+
+		$("#track_" + track_id).addClass("active");
+
+		active_tracks.push(tracks[track_idx]);
+
+		populateTrackEditForm(tracks[track_idx].name);
+		populateActive();
+	}
+
+	
+	function fixSpecials(str){
+		return $("<div/>").html(str).text();
+	}
+
+
+	function populateArtistEditForm(artist){
+		$("#album_edit").hide();
+		$("#track_edit").hide();
+		$("#year_edit").hide();
+		$("#track_no_edit").hide();
+		$("#disc_no_edit").hide();
+		$("#genre_edit").hide();
+		$("#album_artist_edit").hide();
+		$("#comment_edit").hide();
+
+		$("#artist_field").val(fixSpecials(artist));
+		$("#id").html('<input hidden name="artist_id" value="' + active_artists[0].id + '"></input>' );
+		
+		$("#album_field").val("");
+		$("#year_field").val("");
+		$("#track_field").val("");
+		$("#track_no_field").val("");
+		$("#track_total_field").val("");
+		$("#disc_no_field").val("");
+		$("#disc_total_field").val("");
+		$("#genre_field").val("");
+
+	}
+	
+	function populateAlbumEditForm(data, obj, sts){
+		album_info = $.parseJSON(data);
+		
+		$("#album_edit").show();
+		$("#track_edit").hide();
+		$("#year_edit").show();
+		$("#track_no_edit").show();
+		$("#track_no_field").val("");
+		$("#track_no_field").attr("disabled", true);
+		$("#disc_no_edit").show();
+		$("#genre_edit").show();
+		$("#album_artist_edit").show();
+		$("#comment_edit").hide();
+
+		$("#id").html('<input hidden name="album_id" value="' + active_albums[0].album_id + '"></input>' );
+
+		$("#album_field").val(fixSpecials(active_albums[0].name));
+		$("#year_field").val(active_albums[0].year);
+		$("#track_total_field").val(album_info.track_total);
+		$("#disc_no_field").val(album_info.disc_no);
+		$("#disc_total_field").val(album_info.disc_total);
+		$("#genre_field").val(fixSpecials(album_info.genre));
+		
+		$("#track_field").val("");
+		$("#track_no_field").val("");
+	}
+
+	function populateTrackEditForm(){
+		$("#album_edit").show();
+		$("#track_edit").show();
+		$("#year_edit").show();
+		$("#track_no_edit").show();
+		$("#disc_no_edit").show();
+		$("#genre_edit").show();
+		$("#album_artist_edit").show();
+		$("#comment_edit").hide();
+		$("#track_no_field").attr("disabled", false);
+	
+		$("#id").html('<input hidden name="track_id" value="' + active_tracks[0].track_id + '"></input>' );
+		
+		$("#track_field").val(fixSpecials(active_tracks[0].name));
+
+		$("#track_no_field").val(active_tracks[0].track_no);
+		$("#track_total_field").val(active_tracks[0].track_total);
+
+		$("#disc_no_field").val(active_tracks[0].disc_no);
+		$("#disc_total_field").val(active_tracks[0].disc_total);
+
+		$("#genre_field").val(fixSpecials(active_tracks[0].genre));
+	}
+
+	function getSettings(){
+		$.ajax({
+			url:"api/getSettings.php"
+			,data:{1:"MUSIC_PATH",2:"MUSIC_FORMAT"}
+			,type:'GET'
+			,datatype:'json'
+			,success:populateSettings
+			,error:handleError
+		});
+	}
+
+	function populateSettings(data,obj,sts){
+		settings = $.parseJSON(data);
+		$("#music_location").val(settings.MUSIC_PATH);
+		$("#music_format").val(settings.MUSIC_FORMAT);
+		activateSettingsSaveButton();
+
+	}
+		
+
+	function handleError(obj,sts,et){
+		$("#main").html('<span style="text-align:center"><h2>Can\'t find the books, they must be in La Jolla.</h2><h4>There was an error. Try refreshing the page.</h4></span>');
+	}
+
+	function saveSettings(){
+		startSparkling("Saving settings");
+
+		var data = {};
+		data.MUSIC_PATH = $("#music_location").val();
+		data.MUSIC_FORMAT = $("#music_format").val();
+
+		$.ajax({
+			url: 'api/changeSettings.php'
+			,type: 'GET'
+			,data: data
+			,success: function (){
+				stopSparkling("Saving settings");
+				getSettings();
+				}
+		});
+	}
+
+
+
+	function editItem(){
+		if (active_tracks.length > 0){
+			startSparkling("Applying changes to track");
+			
+			var data = {};
+			data.track_id = active_tracks[0].track_id;
+			data.artist = $("#artist_field").val();
+			data.album = $("#album_field").val();
+			data.title = $("#track_field").val();
+			data.year = $("#year_field").val();
+			data.track_no = $("#track_no_field").val();
+			data.track_total = $("#track_total_field").val();
+			data.disc_no = $("#disc_no_field").val();
+			data.disc_total = $("#disc_total_field").val();
+			data.genre = $("#genre_field").val();
+
+			$.ajax({
+				url: 'api/edit.php'
+				,type: 'GET'
+				,success: function (){
+					stopSparkling("Applying changes to track");
+					getArtists();
+					}
+				,data: data
+			});
+		}
+		else if (active_albums.length > 0){
+			startSparkling("Applying changes to album");
+			
+			var data = {};
+			data.album_id = active_albums[0].album_id;
+			data.artist = $("#artist_field").val();
+			data.album = $("#album_field").val();
+			data.year = $("#year_field").val();
+			data.track_total = $("#track_total_field").val();
+			data.disc_no = $("#disc_no_field").val();
+			data.disc_total = $("#disc_total_field").val();
+			data.genre = $("#genre_field").val();
+			
+			$.ajax({
+				url: 'api/edit.php'
+				,type: 'GET'
+				,success: function(){
+					stopSparkling("Applying changes to album");
+					getArtists();
+					}
+				,data: data
+			});
+		}
+		else if (active_artists.length > 0){
+
+			var data = {};
+			data.artist_id = active_artists[0].id;
+			data.artist = $("#artist_field").val();
+
+			startSparkling("Applying changes to artist");
+			$.ajax({
+				url: 'api/edit.php'
+				,type: 'GET'
+				,success: function (){ 
+					stopSparkling("Applying changes to artist");
+					getArtists();
+					}
+				,data: data
+			});
+		}
+
+		return false;
+	}
+
+	function deleteItem(){
+		if (active_tracks.length > 0){
+			startSparkling("Deleting track");
+			$.ajax({
+				url: 'api/delete.php'
+				,type: 'GET'
+				,success: function(){ 
+					getArtists();
+					stopSparkling("Deleting track");
+					}
+				,data: {track_id:active_tracks[0].track_id}
+			});
+		}
+		else if (active_albums.length > 0){
+			startSparkling("Deleting album");
+			$.ajax({
+				url: 'api/delete.php'
+				,type: 'GET'
+				,success: function(){ 
+					getArtists();
+					stopSparkling("Deleting album");
+					}
+				,data: {album_id:active_albums[0].album_id}
+			});
+		}
+		else if (active_artists.length > 0){
+			startSparkling("Deleting artist");
+			$.ajax({
+				url: 'api/delete.php'
+				,type: 'GET'
+				,success: function(){
+					getArtists();
+					stopSparkling("Deleting artist");
+				}
+				,data: {artist_id:active_artists[0].id}
+			});
+		}
+
+		return false;
+	}
+
+	function populateDelete(){
+		$("#deleteForm").submit(function(event){
+			event.preventDefault();
+			deleteItem();
+		});
+		
+		if (active_tracks.length > 0){
+			$("#delete_description").html('the track "' + active_tracks[0].name + '" from "' + active_albums[0].name + '" by "' + active_artists[0].name + '"');
+			$("#delete_checkbox").prop('checked', false);
+		}
+		else if (active_albums.length > 0){
+			$("#delete_description").html('the album "' + active_albums[0].name + '" by "' + active_artists[0].name + '"');
+			$("#delete_checkbox").prop('checked', false);
+		}
+		else if (active_artists.length > 0){
+			$("#delete_description").html('the artist "' + active_artists[0].name + '"');
+			$("#delete_checkbox").prop('checked', false);
+		}	
+	}
+
+	/*
+	function selectBack(active_artist, active_album, active_track){
+		if (active_artist != null){
+			idx = $.inArray(active_artist, artists);
+
+			if (idx > -1){
+				selectArtist(active_artist.id, idx);
+				if (active_album != null){
+					idx = $.inArray(active_album.album_id, albums);
+					if (idx > -1){
+						selectAlbum(active_album.id, idx);
+				}
+			}
+	}*/
+    </script>
+  </head>
+  
+  <body style="height:100%; margin:0; passing:0; overflow:hidden">
+    <title>mama</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+    <link rel="stylesheet" href="themes/cosmo/bootstrap.css">
+    <link rel="stylesheet" href="css/bootstrap-responsive.css">
+    <link rel="stylesheet" href="https://djyhxgczejc94.cloudfront.net/builds/f0fdb9a374508dcab0ab5a5b4124834f6ff0e52c.css">
+    <link rel="stylesheet" href="css/divshot-util.css">
+    <link rel="stylesheet" href="css/divshot-canvas.css">
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </a>
+          <a class="brand" href="#" onclick="showMain();return false;">MAMA</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li>
+                <a href="#" onclick="showMain();return false;" id="all_button">All</a> 
+              </li>
+              <!--<li>
+                <a href="#">Recent</a>
+              </li>-->
+              <li>
+                <a href="#" onclick="showSettings();return false;" id="settings_button">Settings</a> 
+              </li>
+            </ul>
+	    <div hidden id="sparkle" style="position:absolute; top:0; right:0; color:white; font-size:14px; padding-top:15px;" > <span id="sparkleMessage">Something</span>... <span id="sparkler" style="font-family:monospace">-</span> </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="main" class="row-fluid">
+      <div class="span3">
+        <div class="container-fluid" id="artist">
+		<h3>Artists
+		<div class="btn-group" style="">
+
+			<a class="dropdown-toggle" style="float:right;" data-toggle="dropdown" href="#"><span style="vertical-align:middle" class="caret"></span></a>
+			<ul class="dropdown-menu" style="text-align:left; top:50%">
+				<li id="sort_alphabetical" class="active"><a href="#" onclick="setActiveSort('#sort_alphabetical');getArtists();">Alphabetical</a></li>
+				<li id="sort_today"><a href="#" onclick="setActiveSort('#sort_today');getArtists();">Today</a></li>
+				<li id="sort_week"><a href="#" onclick="setActiveSort('#sort_week');getArtists();">This Week</a></li>
+				<li id="sort_month"><a href="#" onclick="setActiveSort('#sort_month');getArtists();">This Month</a></li>
+			</ul>
+		</div>
+		</h3>
+	  <!--<div style="position:relative; text-align:center" id="letter_list"></div>-->
+	  <div id="scroll" style="overflow:auto;">
+             <ul class="nav nav-stacked nav-pills" id="artist_list">
+             </ul>
+	  </div>
+	 <div style="position:relative; text-align:center" id="letter_list"></div>
+        </div>
+      </div>
+      <div class="span3">
+        <div class="container-fluid" id="album">
+          <h3>Albums</h3>
+	  <div style="overflow:auto;">
+          <ul class="nav nav-stacked nav-pills" id="album_list">
+          </ul>
+	  </div>
+        </div>
+      </div>
+      <div class="span3">
+        <div class="container-fluid" id="track">
+          <h3>Tracks</h3>
+	  <div style="overflow:auto;">
+          <ul class="nav nav-stacked nav-pills" id="track_list">
+          </ul>
+	  </div>
+        </div>
+      </div>
+      <div class="span3" id="action" style="overflow:auto">
+        <ul class="nav pull-left nav-pills">
+          <li id="edit_button" class="active">
+            <a onclick="return showEdit();return false;">Edit</a> 
+          </li>
+          <!--<li id="merge_button">
+            <a onclick="return showMerge();return false;">Merge</a> 
+          </li>-->
+          <li id="delete_button">
+            <a onclick="return showDelete();return false;">Delete</a> 
+          </li>
+          <!--<li>
+            <a href="#">Download</a> 
+          </li>-->
+        </ul>
+	<span id="action_contents">
+		<form>
+		  <div class="form-actions">
+		  </div>
+		</form>
+	</span>
+      </div>
+    </div>
+  </body>
+
+</html>

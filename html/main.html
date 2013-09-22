@@ -1,0 +1,51 @@
+
+      <div class="span3">
+        <div class="container-fluid" id="artist">
+          <h3>Artists</h3>
+	  <div id="scroll" style="overflow:auto;">
+             <ul class="nav nav-stacked nav-pills" id="artist_list">
+             </ul>
+	  </div>
+	  <div style="position:relative; text-align:center" id="letter_list"></div>
+        </div>
+      </div>
+      <div class="span3">
+        <div class="container-fluid" id="album">
+          <h3>Albums</h3>
+	  <div style="overflow:auto;">
+          <ul class="nav nav-stacked nav-pills" id="album_list">
+          </ul>
+	  </div>
+        </div>
+      </div>
+      <div class="span3">
+        <div class="container-fluid" id="track">
+          <h3>Tracks</h3>
+	  <div style="overflow:auto;">
+          <ul class="nav nav-stacked nav-pills" id="track_list">
+          </ul>
+	  </div>
+        </div>
+      </div>
+      <div class="span3" id="action" style="overflow:auto">
+        <ul class="nav pull-left nav-pills">
+          <li id="edit_button" class="active">
+            <a onclick="return showEdit();return false;">Edit</a> 
+          </li>
+          <!--<li id="merge_button">
+            <a onclick="return showMerge();return false;">Merge</a> 
+          </li>-->
+          <li id="delete_button">
+            <a onclick="return showDelete();return false;">Delete</a> 
+          </li>
+          <!--<li>
+            <a href="#">Download</a> 
+          </li>-->
+        </ul>
+	<span id="action_contents">
+		<form>
+		  <div class="form-actions">
+		  </div>
+		</form>
+	</span>
+      </div>

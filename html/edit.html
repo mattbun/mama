@@ -1,0 +1,56 @@
+<form id="editForm" ><!--onsubmit="return submitEdit();">-->
+	<div class="form-actions">
+		<span hidden id="id"></span>
+		
+		<span id="artist_edit">
+			<label>Artist</label>
+			<input class="input-block-level input-large" name="artist" type="text" id="artist_field">
+		</span>
+
+		<!-- NO SUPPORT FOR THIS YET!
+		<span id="album_artist_edit">
+			<label>Album Artist</label>
+			<input class="input-medium input-block-level" type="text" id="album_artist_field">
+		</span>-->
+		
+		<span id="album_edit">
+			<label>Album</label>
+			<input class="input-medium input-block-level" name="album" type="text" id="album_field">
+		</span>
+		
+		<span id="track_edit">
+			<label>Track Title</label>
+			<input class="input-medium input-block-level" name="title" type="text" id="track_field">
+		</span>
+		
+		<span id="year_edit">
+			<label>Year</label>
+			<input class="input-small" name="year" type="number" id="year_field">
+		</span>
+		
+		<span id="track_no_edit">
+			<label>Track Number</label>
+			<input class="input-mini" name="track_no" type="number" id="track_no_field"> of
+			<input class="input-mini" name="track_total" type="number" id="track_total_field">
+		</span>
+		
+		<span id="disc_no_edit">
+			<label>Disc Number</label>
+			<input class="input-mini" name="disc_no" type="number" id="disc_no_field"> of
+			<input class="input-mini" name="disc_total" type="number" id="disc_total_field">
+		</span>
+		
+		<span id="genre_edit">
+			<label>Genre</label>
+			<input class="input-medium input-block-level" name="genre" type="text" id="genre_field">
+		</span>
+		
+		<!--<span id="comment_edit">
+			<label>Comments</label>
+			<textarea class="input-block-level" id="comments_field"></textarea>
+		</span>-->
+
+		<button type="submit" class="btn btn-primary">Save</button>
+		<button class="btn" value="Reset" type="reset" onclick="showEdit()">Revert</button>
+	</div>
+</form>
