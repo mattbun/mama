@@ -1,12 +1,11 @@
 <?php
 
-include 'db2-sqlite.php';
+include 'db2-sqlite.php'; //This should be changed to use a different kind of database
 
-$db = new sqliteDBConnection();
+$db = new DBConnection();
 $db->connectAndPrepare();
-print $db->getSetting("MUSIC_PATH");
-$db->setSetting("MUSIC_PATH","this/folder");
-print $db->getSetting("MUSIC_PATH");
+
+print $db->addArtist(array("yeah luke"));
 
 /*
 abstract class dbConnection {

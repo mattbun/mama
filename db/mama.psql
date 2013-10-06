@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 CREATE TABLE Track
 (
-	id PRIMARY KEY INTEGER
+	id SERIAL
 	,name VARCHAR(250)  NULL 
 	,path TEXT  NULL 
 	,other_artist VARCHAR(250) NULL
@@ -22,7 +22,7 @@ CREATE TABLE Track
 --------------------------------------------------------------------------------
 CREATE TABLE AlbumTrackMap
 (
-	id PRIMARY KEY INTEGER
+	id SERIAL
 	,album_id INTEGER  NULL 
 	,track_id INTEGER  NULL 
 	,CONSTRAINT PK_AlbumTrackMap_id PRIMARY KEY (id)
@@ -34,7 +34,7 @@ CREATE TABLE AlbumTrackMap
 --------------------------------------------------------------------------------
 CREATE TABLE Artist
 (
-	id PRIMARY KEY INTEGER
+	id SERIAL
 	,name VARCHAR(250)  NULL 
 	,sort_name VARCHAR(250) NULL
 	,date_added TIMESTAMP  NULL 
@@ -47,7 +47,7 @@ CREATE TABLE Artist
 --------------------------------------------------------------------------------
 CREATE TABLE ArtistAlbumMap
 (
-	id PRIMARY KEY INTEGER
+	id SERIAL
 	,artist_id INTEGER  NULL 
 	,album_id INTEGER  NULL 
 	,CONSTRAINT PK_ArtistAlbumMap_id PRIMARY KEY (id)
@@ -59,7 +59,7 @@ CREATE TABLE ArtistAlbumMap
 --------------------------------------------------------------------------------
 CREATE TABLE Album
 (
-	id PRIMARY KEY INTEGER
+	id SERIAL
 	,name VARCHAR(250)  NULL 
 	,year INTEGER  NULL 
 	,date_added TIMESTAMP  NULL 
@@ -72,7 +72,7 @@ CREATE TABLE Album
 --------------------------------------------------------------------------------
 CREATE TABLE Settings
 (
-	id PRIMARY KEY INTEGER
+	id SERIAL
 	,key VARCHAR(250)  NULL 
 	,value VARCHAR(250)  NULL 
 	,CONSTRAINT PK_Settings_id PRIMARY KEY (id)
